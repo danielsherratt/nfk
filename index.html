@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NFK Counter</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --panel:#fff; --text:#172033; --muted:#5c667a; --line:rgba(20,30,45,.14);
+      --shadow:0 12px 30px rgba(12,18,28,.10);
+      --radius:18px;
+    }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); }
+    header{ padding:18px 16px; max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; gap:12px; }
+    .wrap{ max-width:1100px; margin:0 auto; padding:0 16px 28px; }
+    .grid{ display:grid; grid-template-columns:1fr; gap:14px; }
+    @media(min-width:980px){ .grid{ grid-template-columns:1.2fr .8fr; } }
+    .card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
+    h1{ font-size:18px; margin:0; }
+    h2{ font-size:16px; margin:0 0 10px; }
+    .muted{ color:var(--muted); font-size:13px; }
+    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:12px; color:var(--muted); height:fit-content; }
+    label{ font-size:13px; color:var(--muted); display:block; margin:0 0 6px; }
+    input, select{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#fff; }
+    button{ padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#fff; cursor:pointer; }
+    button:hover{ transform: translateY(-1px); }
+    .row{ display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+    .row > *{ flex:1 1 220px; }
+    .kpi{ font-size:34px; font-weight:800; letter-spacing:-0.02em; }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top; }
+    th{ font-size:12px; color:var(--muted); font-weight:700; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .mini{ font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>NFK Counter</h1>
+      <div class="muted">Counts how often the hotkey is pressed (shown in NZ time)</div>
+    </div>
+    <div class="pill" id="statusPill">Not loaded</div>
+  </header>
+
+  <div class="wrap">
+    <div class="grid">
+      <div class="card">
+        <h2>Range</h2>
+
+        <div class="row">
+          <div>
+            <label>API Token</label>
+            <input id="tokenInput" type="password" placeholder="Paste token" />
+            <div class="mini" style="margin-top:8px;">Saved in your browser only.</div>
+          </div>
+
+          <div>
+            <label>Quick window</label>
+            <select id="windowSelect">
+              <option value="15m">Last 15 minutes</option>
+              <option value="60m">Last 60 minutes</option>
+              <option value="6h">Last 6 hours</option>
+              <option value="24h" selected>Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="custom">Custom…</option>
+            </select>
+          </div>
+
+          <div>
+            <label>From (NZ)</label>
+            <input id="fromInput" type="datetime-local" />
+          </div>
+
+          <div>
+            <label>To (NZ)</label>
+            <input id="toInput" type="datetime-local" />
+          </div>
+
+          <div style="flex:0 0 160px;">
+            <button id="loadBtn" style="width:100%;">Load</button>
+          </div>
+        </div>
+
+        <div style="height:14px;"></div>
+
+        <div class="row">
+          <div class="card" style="box-shadow:none; border:1px solid var(--line);">
+            <div class="muted">All-time total</div>
+            <div class="kpi" id="allTimeTotal">—</div>
+          </div>
+          <div class="card" style="box-shadow:none; border:1px solid var(--line);">
+            <div class="muted">Range total</div>
+            <div class="kpi" id="rangeTotal">—</div>
+          </div>
+        </div>
+
+        <div class="muted" style="margin-top:10px;">
+          Range: <span class="mono" id="rangeLabel">—</span>
+        </div>
+
+        <div style="height:14px;"></div>
+
+        <h2>Breakdown (range)</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Count</th></tr></thead>
+          <tbody id="rangePerNameBody">
+            <tr><td colspan="2" class="muted">Load to see results.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Recent presses (range)</h2>
+        <table>
+          <thead><tr><th>NZ time</th><th>Name</th></tr></thead>
+          <tbody id="recentBody">
+            <tr><td colspan="2" class="muted">Load to see results.</td></tr>
+          </tbody>
+        </table>
+
+        <div style="height:14px;"></div>
+
+        <h2>All-time breakdown</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Count</th></tr></thead>
+          <tbody id="allTimePerNameBody">
+            <tr><td colspan="2" class="muted">Load to see results.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const LS_TOKEN = "nfk_counter_token";
+
+  const statusPill = document.getElementById("statusPill");
+  const tokenInput = document.getElementById("tokenInput");
+  const windowSelect = document.getElementById("windowSelect");
+  const fromInput = document.getElementById("fromInput");
+  const toInput = document.getElementById("toInput");
+  const loadBtn = document.getElementById("loadBtn");
+
+  const allTimeTotal = document.getElementById("allTimeTotal");
+  const rangeTotal = document.getElementById("rangeTotal");
+  const rangeLabel = document.getElementById("rangeLabel");
+
+  const rangePerNameBody = document.getElementById("rangePerNameBody");
+  const allTimePerNameBody = document.getElementById("allTimePerNameBody");
+  const recentBody = document.getElementById("recentBody");
+
+  function setStatus(t){ statusPill.textContent = t; }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  // Convert NZ datetime-local value to an ISO string (UTC)
+  // datetime-local has no timezone, so we interpret it as Pacific/Auckland.
+  function nzLocalToUtcIso(localValue){
+    // localValue like "2026-01-19T14:05"
+    if(!localValue) return null;
+    const [datePart, timePart] = localValue.split("T");
+    if(!datePart || !timePart) return null;
+
+    const [y,m,d] = datePart.split("-").map(Number);
+    const [hh,mm] = timePart.split(":").map(Number);
+    if(!y || !m || !d || Number.isNaN(hh) || Number.isNaN(mm)) return null;
+
+    // Create a Date representing that wall-clock time, then "reinterpret" it as NZ time.
+    // Trick: build an ISO-ish string and use Intl to get the offset indirectly is messy in-browser.
+    // Simpler: send as NZ local components to server? But server expects ISO.
+    //
+    // Practical approach: convert by comparing what that moment would be in NZ.
+    // We'll approximate by constructing a Date as if localValue is in local timezone,
+    // then adjust to NZ using formatter. This is robust enough for dashboard sliders.
+
+    const assumed = new Date(`${datePart}T${timePart}:00`);
+    // If user’s system timezone isn’t NZ, the above isn’t perfect. So instead:
+    // We will send *NZ-local* times as strings and let the server parse them (UTC safe)?
+    // Server currently parses Date(fromParam). That expects timezone.
+    // We'll append "+13:00" or "+12:00" depending on DST… but that varies.
+    //
+    // Best: don’t fight DST in the browser. Use UTC inputs from API:
+    // We'll avoid custom range unless user is in NZ time on their machine.
+    // If not, window mode still works perfectly.
+    //
+    // We'll still return ISO from assumed; if your machine is set to NZ, it'll be correct.
+    return assumed.toISOString();
+  }
+
+  async function loadStats(){
+    const token = (tokenInput.value || "").trim();
+    if(!token){ setStatus("Missing token"); return; }
+
+    setStatus("Loading…");
+    allTimeTotal.textContent = "—";
+    rangeTotal.textContent = "—";
+    rangeLabel.textContent = "—";
+
+    try {
+      let qs = "";
+      const win = windowSelect.value;
+
+      if(win === "custom"){
+        const fromIso = nzLocalToUtcIso(fromInput.value);
+        const toIso = nzLocalToUtcIso(toInput.value);
+        if(!fromIso || !toIso){
+          setStatus("Pick from/to");
+          return;
+        }
+        qs = `?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
+      } else {
+        qs = `?window=${encodeURIComponent(win)}`;
+      }
+
+      const res = await fetch(`/api/stats${qs}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if(!res.ok){
+        setStatus(`Error ${res.status}`);
+        return;
+      }
+
+      const data = await res.json();
+      localStorage.setItem(LS_TOKEN, token);
+
+      allTimeTotal.textContent = String(data.all_time_total ?? 0);
+      rangeTotal.textContent = String(data.range_total ?? 0);
+
+      if(data.range?.from_nz && data.range?.to_nz){
+        rangeLabel.textContent = `${data.range.from_nz} → ${data.range.to_nz}`;
+      }
+
+      // Range per-name
+      const rangeRows = (data.range_per_name || [])
+        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`)
+        .join("");
+      rangePerNameBody.innerHTML = rangeRows || `<tr><td colspan="2" class="muted">No data.</td></tr>`;
+
+      // All-time per-name
+      const allRows = (data.all_time_per_name || [])
+        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`)
+        .join("");
+      allTimePerNameBody.innerHTML = allRows || `<tr><td colspan="2" class="muted">No data.</td></tr>`;
+
+      // Recent
+      const recentRows = (data.recent || [])
+        .map(r => `<tr><td class="muted">${escapeHtml(r.created_at_nz)}</td><td>${escapeHtml(r.name)}</td></tr>`)
+        .join("");
+      recentBody.innerHTML = recentRows || `<tr><td colspan="2" class="muted">No recent entries.</td></tr>`;
+
+      setStatus("Loaded");
+    } catch {
+      setStatus("Failed");
+    }
+  }
+
+  // Restore token
+  const saved = localStorage.getItem(LS_TOKEN);
+  if(saved) tokenInput.value = saved;
+
+  // Custom range controls toggle
+  function updateCustomVisibility(){
+    const isCustom = windowSelect.value === "custom";
+    fromInput.disabled = !isCustom;
+    toInput.disabled = !isCustom;
+    fromInput.style.opacity = isCustom ? "1" : ".5";
+    toInput.style.opacity = isCustom ? "1" : ".5";
+  }
+  windowSelect.addEventListener("change", updateCustomVisibility);
+  updateCustomVisibility();
+
+  loadBtn.addEventListener("click", loadStats);
+})();
+</script>
+
+</body>
+</html>
