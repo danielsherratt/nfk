@@ -5,16 +5,13 @@ function corsHeaders() {
     "Access-Control-Allow-Headers": "Content-Type,Authorization",
   };
 }
-
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { "Content-Type": "application/json", ...corsHeaders() },
   });
 }
-
 function parseWindowToMs(windowStr) {
-  // 15m, 2h, 7d
   if (!windowStr) return null;
   const m = /^(\d+)(m|h|d)$/i.exec(windowStr.trim());
   if (!m) return null;
@@ -26,46 +23,29 @@ function parseWindowToMs(windowStr) {
   if (unit === "d") return n * 24 * 60 * 60 * 1000;
   return null;
 }
-
 function nzTimeFromIso(iso) {
   try {
     return new Intl.DateTimeFormat("en-NZ", {
       timeZone: "Pacific/Auckland",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
       hour12: false,
     }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
+  } catch { return iso; }
 }
 
 export async function onRequest(context) {
   const { request, env } = context;
 
-  if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders() });
-  }
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders() });
+  if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
 
-  if (request.method !== "GET") {
-    return json({ error: "Method not allowed" }, 405);
-  }
-
-  // Auth
   const auth = request.headers.get("Authorization") || "";
-  if (!env.API_TOKEN || auth !== `Bearer ${env.API_TOKEN}`) {
-    return json({ error: "Unauthorized" }, 401);
-  }
+  if (!env.API_TOKEN || auth !== `Bearer ${env.API_TOKEN}`) return json({ error: "Unauthorized" }, 401);
 
   const url = new URL(request.url);
 
-  // Determine range
   let fromIso, toIso;
-
   const windowStr = url.searchParams.get("window");
   const windowMs = parseWindowToMs(windowStr);
 
@@ -77,17 +57,13 @@ export async function onRequest(context) {
   } else {
     const fromParam = url.searchParams.get("from");
     const toParam = url.searchParams.get("to");
-
     if (fromParam && toParam) {
       const fromD = new Date(fromParam);
       const toD = new Date(toParam);
-      if (isNaN(fromD.getTime()) || isNaN(toD.getTime()) || fromD >= toD) {
-        return json({ error: "Invalid from/to" }, 400);
-      }
+      if (isNaN(fromD.getTime()) || isNaN(toD.getTime()) || fromD >= toD) return json({ error: "Invalid from/to" }, 400);
       fromIso = fromD.toISOString();
       toIso = toD.toISOString();
     } else {
-      // default: last 24h
       const to = new Date();
       const from = new Date(Date.now() - 24 * 60 * 60 * 1000);
       toIso = to.toISOString();
@@ -95,19 +71,11 @@ export async function onRequest(context) {
     }
   }
 
-  // All-time totals
-  const allTimeTotal = await env.DB.prepare(
-    `SELECT COUNT(*) AS total FROM nfk_events`
-  ).first();
-
+  const allTimeTotal = await env.DB.prepare(`SELECT COUNT(*) AS total FROM nfk_events`).first();
   const allTimePerName = await env.DB.prepare(
-    `SELECT name, COUNT(*) AS count
-     FROM nfk_events
-     GROUP BY name
-     ORDER BY count DESC, name ASC`
+    `SELECT name, COUNT(*) AS count FROM nfk_events GROUP BY name ORDER BY count DESC, name ASC`
   ).all();
 
-  // Range totals
   const rangeTotal = await env.DB.prepare(
     `SELECT COUNT(*) AS total
      FROM nfk_events
@@ -122,7 +90,6 @@ export async function onRequest(context) {
      ORDER BY count DESC, name ASC`
   ).bind(fromIso, toIso).all();
 
-  // Recent range events
   const recent = await env.DB.prepare(
     `SELECT created_at_utc, name
      FROM nfk_events
@@ -131,16 +98,9 @@ export async function onRequest(context) {
      LIMIT 50`
   ).bind(fromIso, toIso).all();
 
-  const recentWithNz = (recent?.results ?? []).map(r => ({
-    name: r.name,
-    created_at_utc: r.created_at_utc,
-    created_at_nz: nzTimeFromIso(r.created_at_utc),
-  }));
-
   return json({
     range: {
-      from_utc: fromIso,
-      to_utc: toIso,
+      from_utc: fromIso, to_utc: toIso,
       from_nz: nzTimeFromIso(fromIso),
       to_nz: nzTimeFromIso(toIso),
     },
@@ -148,6 +108,10 @@ export async function onRequest(context) {
     all_time_per_name: allTimePerName?.results ?? [],
     range_total: rangeTotal?.total ?? 0,
     range_per_name: rangePerName?.results ?? [],
-    recent: recentWithNz,
+    recent: (recent?.results ?? []).map(r => ({
+      name: r.name,
+      created_at_utc: r.created_at_utc,
+      created_at_nz: nzTimeFromIso(r.created_at_utc),
+    })),
   });
 }
