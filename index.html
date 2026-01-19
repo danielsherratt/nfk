@@ -6,123 +6,413 @@
   <title>NFK Counter</title>
   <style>
     :root{
-      --bg:#f6f7fb; --panel:#fff; --text:#172033; --muted:#5c667a; --line:rgba(20,30,45,.14);
-      --shadow:0 12px 30px rgba(12,18,28,.10);
-      --radius:18px;
+      --bg1:#f6f7ff;
+      --bg2:#f3fbff;
+
+      --panel:#ffffff;
+      --text:#0f172a;
+      --muted:#475569;
+      --line:rgba(15,23,42,.12);
+
+      --shadow: 0 18px 45px rgba(2, 6, 23, .10);
+      --shadow2: 0 10px 25px rgba(2, 6, 23, .08);
+      --radius: 20px;
+
+      --a1:#7c3aed;   /* violet */
+      --a2:#06b6d4;   /* cyan */
+      --a3:#f97316;   /* orange */
+      --a4:#22c55e;   /* green */
+      --a5:#e11d48;   /* rose */
     }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); }
-    header{ padding:16px; max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; gap:12px; }
-    .wrap{ max-width:1100px; margin:0 auto; padding:0 16px 24px; }
-    .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
-    @media(min-width:980px){ .grid{ grid-template-columns:1.2fr .8fr; } }
-    .card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px; }
-    h1{ font-size:16px; margin:0; }
-    h2{ font-size:14px; margin:0 0 10px; }
-    .muted{ color:var(--muted); font-size:12px; }
-    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:12px; color:var(--muted); height:fit-content; }
-    select, input{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#fff; }
-    button{ padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#fff; cursor:pointer; }
-    button:hover{ transform: translateY(-1px); }
-    .row{ display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
-    .row > *{ flex:1 1 220px; }
-    .kpi{ font-size:34px; font-weight:800; letter-spacing:-0.02em; }
-    table{ width:100%; border-collapse:collapse; }
-    th,td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top; }
-    th{ font-size:11px; color:var(--muted); font-weight:700; }
-    canvas{ width:100%; height:220px; border:1px solid var(--line); border-radius:14px; background:#fff; }
-    .legend{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .tag{ border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:12px; color:var(--muted); background:#fff; }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(124,58,237,.16), transparent 55%),
+        radial-gradient(1000px 650px at 90% 0%, rgba(6,182,212,.14), transparent 55%),
+        radial-gradient(900px 700px at 50% 110%, rgba(249,115,22,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    header{
+      padding:18px 16px 12px;
+      max-width:1120px;
+      margin:0 auto;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+    }
+
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      min-width: 0;
+    }
+
+    .logo{
+      width:44px; height:44px;
+      border-radius:14px;
+      background: conic-gradient(from 180deg, var(--a1), var(--a2), var(--a3), var(--a4), var(--a5), var(--a1));
+      box-shadow: var(--shadow2);
+      border: 1px solid rgba(255,255,255,.55);
+    }
+
+    h1{
+      font-size:16px;
+      margin:0;
+      letter-spacing:-0.01em;
+    }
+
+    .sub{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 72vw;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow2);
+      font-size:12px;
+      color:var(--muted);
+      height:fit-content;
+      user-select:none;
+    }
+
+    .dot{
+      width:10px; height:10px;
+      border-radius:999px;
+      background: rgba(148,163,184,.9);
+      box-shadow: 0 0 0 4px rgba(148,163,184,.18);
+    }
+
+    .dot.ok{ background: rgba(34,197,94,.95); box-shadow: 0 0 0 4px rgba(34,197,94,.18); }
+    .dot.bad{ background: rgba(225,29,72,.95); box-shadow: 0 0 0 4px rgba(225,29,72,.18); }
+
+    .wrap{
+      max-width:1120px;
+      margin:0 auto;
+      padding:0 16px 28px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+    }
+
+    @media(min-width:980px){
+      .grid{ grid-template-columns: 1.3fr .7fr; }
+    }
+
+    .card{
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .cardInner{ padding:14px; }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:end;
+    }
+
+    select, input{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(15,23,42,.14);
+      background: rgba(255,255,255,.92);
+      outline:none;
+      color:var(--text);
+      box-shadow: 0 1px 0 rgba(2,6,23,.04);
+    }
+
+    select:focus, input:focus{
+      border-color: rgba(124,58,237,.45);
+      box-shadow: 0 0 0 4px rgba(124,58,237,.14);
+    }
+
+    .control{
+      flex: 1 1 220px;
+      min-width: 170px;
+    }
+
+    .control.small{
+      flex: 0 0 200px;
+      min-width: 200px;
+    }
+
+    .hide{ display:none !important; }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      padding:14px;
+      border-top: 1px solid rgba(15,23,42,.08);
+      background:
+        radial-gradient(900px 250px at 20% 0%, rgba(124,58,237,.10), transparent 60%),
+        radial-gradient(900px 250px at 80% 0%, rgba(6,182,212,.10), transparent 60%);
+    }
+
+    .kpi{
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: 18px;
+      background: rgba(255,255,255,.86);
+      padding:12px 12px 10px;
+      box-shadow: var(--shadow2);
+    }
+
+    .kpi .label{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .chip{
+      width:10px; height:10px; border-radius:999px;
+      background: var(--a2);
+      box-shadow: 0 0 0 4px rgba(6,182,212,.14);
+    }
+    .chip.alt{
+      background: var(--a3);
+      box-shadow: 0 0 0 4px rgba(249,115,22,.14);
+    }
+
+    .kpi .value{
+      margin-top:6px;
+      font-size:34px;
+      font-weight:850;
+      letter-spacing:-0.03em;
+      line-height:1;
+      background: linear-gradient(90deg, var(--a1), var(--a2), var(--a3));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color: transparent;
+    }
+
+    .sectionTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 14px 10px;
+      border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    .sectionTitle h2{
+      margin:0;
+      font-size:13px;
+      color: var(--muted);
+      font-weight:700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding:0 14px 12px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.86);
+      border-radius: 999px;
+      padding:6px 10px;
+      font-size:12px;
+      color: var(--muted);
+      box-shadow: var(--shadow2);
+    }
+    .swatch{
+      width:10px; height:10px; border-radius:999px;
+    }
+
+    .charts{
+      display:grid;
+      gap:12px;
+      padding:14px;
+      border-top: 1px solid rgba(15,23,42,.08);
+      background: rgba(255,255,255,.35);
+    }
+
+    canvas{
+      width:100%;
+      height:220px;
+      border-radius: 18px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.86);
+      box-shadow: var(--shadow2);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th, td{
+      text-align:left;
+      padding:10px 12px;
+      border-bottom: 1px solid rgba(15,23,42,.08);
+      font-size:13px;
+      vertical-align:top;
+    }
+
+    th{
+      font-size:11px;
+      color: var(--muted);
+      font-weight:700;
+      text-transform: uppercase;
+      letter-spacing:.04em;
+      background: rgba(255,255,255,.35);
+    }
+
+    tbody tr:hover td{
+      background: rgba(124,58,237,.06);
+    }
+
+    .right .cardInner{ padding:0; }
+    .rightHeader{
+      padding:14px;
+      border-bottom: 1px solid rgba(15,23,42,.08);
+      background:
+        radial-gradient(800px 240px at 10% 0%, rgba(34,197,94,.10), transparent 60%),
+        radial-gradient(800px 240px at 90% 0%, rgba(225,29,72,.08), transparent 60%);
+    }
+
+    .rightHeader .title{
+      margin:0;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:-.01em;
+    }
+    .rightHeader .mini{
+      margin-top:4px;
+      font-size:12px;
+      color: var(--muted);
+    }
   </style>
 </head>
+
 <body>
   <header>
-    <div>
-      <h1>NFK Counter</h1>
-      <div class="muted" id="rangeLabel">—</div>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div style="min-width:0;">
+        <h1>NFK Counter</h1>
+        <div class="sub" id="rangeLabel">—</div>
+      </div>
     </div>
-    <div class="pill" id="statusPill">—</div>
+    <div class="pill" id="statusPill">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">—</span>
+    </div>
   </header>
 
   <div class="wrap">
     <div class="grid">
       <div class="card">
-        <div class="row">
-          <div>
-            <select id="windowSelect">
-              <option value="15m">15m</option>
-              <option value="60m">60m</option>
-              <option value="6h">6h</option>
-              <option value="24h" selected>24h</option>
-              <option value="7d">7d</option>
-              <option value="30d">30d</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
+        <div class="cardInner">
+          <div class="controls">
+            <div class="control small">
+              <select id="windowSelect">
+                <option value="15m">15m</option>
+                <option value="60m">60m</option>
+                <option value="6h">6h</option>
+                <option value="24h" selected>24h</option>
+                <option value="7d">7d</option>
+                <option value="30d">30d</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
 
-          <div>
-            <input id="fromInput" type="datetime-local" />
-          </div>
+            <div class="control hide" id="fromWrap">
+              <input id="fromInput" type="datetime-local" />
+            </div>
 
-          <div>
-            <input id="toInput" type="datetime-local" />
-          </div>
-
-          <div style="flex:0 0 140px;">
-            <button id="loadBtn" style="width:100%;">Load</button>
+            <div class="control hide" id="toWrap">
+              <input id="toInput" type="datetime-local" />
+            </div>
           </div>
         </div>
 
-        <div style="height:12px;"></div>
-
-        <div class="row">
-          <div class="card" style="box-shadow:none; border:1px solid var(--line);">
-            <div class="muted">Total</div>
-            <div class="kpi" id="allTimeTotal">—</div>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label"><span class="chip"></span> Total</div>
+            <div class="value" id="allTimeTotal">—</div>
           </div>
-          <div class="card" style="box-shadow:none; border:1px solid var(--line);">
-            <div class="muted">Range</div>
-            <div class="kpi" id="rangeTotal">—</div>
+          <div class="kpi">
+            <div class="label"><span class="chip alt"></span> Range</div>
+            <div class="value" id="rangeTotal">—</div>
           </div>
         </div>
 
-        <div style="height:12px;"></div>
-
-        <h2>Over time</h2>
-        <canvas id="chartTotal" width="900" height="260"></canvas>
-
-        <div style="height:12px;"></div>
-
-        <h2>Top names</h2>
-        <canvas id="chartNames" width="900" height="260"></canvas>
+        <div class="sectionTitle">
+          <h2>Over time</h2>
+        </div>
+        <div class="charts">
+          <canvas id="chartTotal"></canvas>
+          <canvas id="chartNames"></canvas>
+        </div>
         <div class="legend" id="legend"></div>
-
-        <div style="height:14px;"></div>
-
-        <h2>By name</h2>
-        <table>
-          <thead><tr><th>Name</th><th>Count</th></tr></thead>
-          <tbody id="rangePerNameBody">
-            <tr><td colspan="2" class="muted">—</td></tr>
-          </tbody>
-        </table>
       </div>
 
-      <div class="card">
-        <h2>Recent</h2>
+      <div class="card right">
+        <div class="rightHeader">
+          <div class="title">Activity</div>
+          <div class="mini">NZ time</div>
+        </div>
+
+        <div class="sectionTitle">
+          <h2>Recent</h2>
+        </div>
         <table>
-          <thead><tr><th>NZ time</th><th>Name</th></tr></thead>
+          <thead>
+            <tr><th>Time</th><th>Name</th></tr>
+          </thead>
           <tbody id="recentBody">
-            <tr><td colspan="2" class="muted">—</td></tr>
+            <tr><td colspan="2" style="color:var(--muted);">—</td></tr>
           </tbody>
         </table>
 
-        <div style="height:14px;"></div>
-
-        <h2>All time</h2>
+        <div class="sectionTitle">
+          <h2>All time</h2>
+        </div>
         <table>
-          <thead><tr><th>Name</th><th>Count</th></tr></thead>
+          <thead>
+            <tr><th>Name</th><th>Count</th></tr>
+          </thead>
           <tbody id="allTimePerNameBody">
-            <tr><td colspan="2" class="muted">—</td></tr>
+            <tr><td colspan="2" style="color:var(--muted);">—</td></tr>
           </tbody>
         </table>
       </div>
@@ -131,31 +421,74 @@
 
 <script>
 (() => {
-  const API_TOKEN = "Granite663WalnutBreezeQuiet!";
+  // Put your token here
+  const API_TOKEN = "PASTE_YOUR_API_TOKEN_HERE";
 
-  const statusPill = document.getElementById("statusPill");
+  const statusText = document.getElementById("statusText");
+  const statusDot = document.getElementById("statusDot");
+  const rangeLabel = document.getElementById("rangeLabel");
+
   const windowSelect = document.getElementById("windowSelect");
+  const fromWrap = document.getElementById("fromWrap");
+  const toWrap = document.getElementById("toWrap");
   const fromInput = document.getElementById("fromInput");
   const toInput = document.getElementById("toInput");
-  const loadBtn = document.getElementById("loadBtn");
 
   const allTimeTotal = document.getElementById("allTimeTotal");
   const rangeTotal = document.getElementById("rangeTotal");
-  const rangeLabel = document.getElementById("rangeLabel");
 
-  const rangePerNameBody = document.getElementById("rangePerNameBody");
-  const allTimePerNameBody = document.getElementById("allTimePerNameBody");
   const recentBody = document.getElementById("recentBody");
+  const allTimePerNameBody = document.getElementById("allTimePerNameBody");
 
   const cTotal = document.getElementById("chartTotal");
   const cNames = document.getElementById("chartNames");
   const legend = document.getElementById("legend");
 
-  function setStatus(t){ statusPill.textContent = t; }
+  function setStatus(state, text){
+    statusText.textContent = text;
+    statusDot.classList.remove("ok","bad");
+    if(state === "ok") statusDot.classList.add("ok");
+    else if(state === "bad") statusDot.classList.add("bad");
+  }
+
   function escapeHtml(s){
-    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    return String(s)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
       .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
+
+  function formatNZ12FromIso(iso){
+    try{
+      return new Intl.DateTimeFormat("en-NZ", {
+        timeZone: "Pacific/Auckland",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+      }).format(new Date(iso));
+    } catch {
+      return iso;
+    }
+  }
+
+  function formatNZ12ShortFromIso(iso){
+    try{
+      return new Intl.DateTimeFormat("en-NZ", {
+        timeZone: "Pacific/Auckland",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      }).format(new Date(iso));
+    } catch {
+      return iso;
+    }
+  }
+
   function localToIso(v){
     if(!v) return null;
     const d = new Date(v);
@@ -163,149 +496,227 @@
     return d.toISOString();
   }
 
-  function updateCustom(){
-    const isCustom = windowSelect.value === "custom";
-    fromInput.disabled = !isCustom;
-    toInput.disabled = !isCustom;
-    fromInput.style.opacity = isCustom ? "1" : ".5";
-    toInput.style.opacity = isCustom ? "1" : ".5";
-  }
-
-  function fitCanvasToCSS(canvas){
-    const cssW = canvas.clientWidth;
-    const cssH = canvas.clientHeight;
+  function fitCanvas(canvas){
     const ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-    canvas.width = Math.floor(cssW * ratio);
-    canvas.height = Math.floor(cssH * ratio);
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = Math.max(1, Math.floor(w * ratio));
+    canvas.height = Math.max(1, Math.floor(h * ratio));
     return ratio;
   }
 
-  function drawAxes(ctx, w, h, pad){
-    ctx.clearRect(0,0,w,h);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(20,30,45,.14)";
-    ctx.beginPath();
-    ctx.moveTo(pad, pad);
-    ctx.lineTo(pad, h-pad);
-    ctx.lineTo(w-pad, h-pad);
-    ctx.stroke();
+  function hexToRgb(hex){
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if(!m) return {r:15,g:23,b:42};
+    return { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
   }
 
-  function drawLineSeries(canvas, points, opts={}){
-    const ctx = canvas.getContext("2d");
-    fitCanvasToCSS(canvas);
+  function colorForName(name){
+    // Deterministic, vibrant-ish
+    let h = 0;
+    for (let i=0; i<name.length; i++) h = (h*33 + name.charCodeAt(i)) >>> 0;
+    const r = 70 + (h % 150);
+    const g = 70 + ((h >>> 8) % 150);
+    const b = 70 + ((h >>> 16) % 150);
+    return { r, g, b };
+  }
 
-    const w = canvas.width, h = canvas.height;
-    const pad = Math.round(Math.min(w,h) * 0.10);
-    drawAxes(ctx, w, h, pad);
+  function clearCanvas(ctx, w, h){
+    ctx.clearRect(0,0,w,h);
+  }
 
-    if(!points.length){
-      ctx.fillStyle = "#5c667a";
-      ctx.font = `${Math.round(Math.min(w,h)*0.06)}px system-ui`;
-      ctx.fillText("—", pad, Math.round(h/2));
-      return;
-    }
+  function drawFrame(ctx, w, h, pad){
+    // subtle grid + axes
+    ctx.save();
+    ctx.lineWidth = 1;
 
-    const xs = points.map(p=>p.x);
-    const ys = points.map(p=>p.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = 0;
-    const maxY = Math.max(1, Math.max(...ys));
-
-    const X = x => pad + ( (x - minX) / (maxX - minX || 1) ) * (w - pad*2);
-    const Y = y => (h - pad) - ( (y - minY) / (maxY - minY || 1) ) * (h - pad*2);
-
-    // grid lines
-    ctx.strokeStyle = "rgba(20,30,45,.10)";
+    // grid
+    ctx.strokeStyle = "rgba(15,23,42,.08)";
     ctx.beginPath();
     for(let i=1;i<=3;i++){
-      const yy = pad + i*(h-pad*2)/4;
-      ctx.moveTo(pad, yy);
-      ctx.lineTo(w-pad, yy);
+      const y = pad + i*(h - pad*2)/4;
+      ctx.moveTo(pad, y);
+      ctx.lineTo(w - pad, y);
     }
     ctx.stroke();
 
-    // line
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = opts.stroke || "#172033";
+    // axes
+    ctx.strokeStyle = "rgba(15,23,42,.14)";
     ctx.beginPath();
-    points.forEach((p,i)=>{
-      const x = X(p.x), y = Y(p.y);
-      if(i===0) ctx.moveTo(x,y);
-      else ctx.lineTo(x,y);
+    ctx.moveTo(pad, pad);
+    ctx.lineTo(pad, h - pad);
+    ctx.lineTo(w - pad, h - pad);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function plotLine(ctx, pts, xMap, yMap, rgb, width){
+    if(!pts.length) return;
+    ctx.save();
+    ctx.lineWidth = width;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.strokeStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+
+    ctx.beginPath();
+    pts.forEach((p,i)=>{
+      const x = xMap(p.x);
+      const y = yMap(p.y);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
     ctx.stroke();
 
-    // dots
-    ctx.fillStyle = opts.stroke || "#172033";
-    points.forEach(p=>{
+    // points
+    ctx.fillStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+    pts.forEach(p=>{
       ctx.beginPath();
-      ctx.arc(X(p.x), Y(p.y), 3, 0, Math.PI*2);
+      ctx.arc(xMap(p.x), yMap(p.y), 3.2, 0, Math.PI*2);
       ctx.fill();
     });
 
-    // max label
-    ctx.fillStyle = "#5c667a";
-    ctx.font = `${Math.round(Math.min(w,h)*0.05)}px system-ui`;
-    ctx.fillText(String(maxY), pad+6, pad+18);
+    ctx.restore();
   }
 
-  function drawMultiLine(canvas, seriesMap){
-    const ctx = canvas.getContext("2d");
-    fitCanvasToCSS(canvas);
-    const w = canvas.width, h = canvas.height;
-    const pad = Math.round(Math.min(w,h) * 0.10);
-    drawAxes(ctx, w, h, pad);
+  function plotArea(ctx, pts, xMap, yMap, rgb, baseY){
+    if(!pts.length) return;
+    ctx.save();
+    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},.10)`;
+    ctx.beginPath();
+    pts.forEach((p,i)=>{
+      const x = xMap(p.x);
+      const y = yMap(p.y);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.lineTo(xMap(pts[pts.length-1].x), baseY);
+    ctx.lineTo(xMap(pts[0].x), baseY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
 
-    const names = Object.keys(seriesMap);
-    const allPoints = names.flatMap(n => seriesMap[n]);
-    if(!allPoints.length){
-      ctx.fillStyle = "#5c667a";
-      ctx.font = `${Math.round(Math.min(w,h)*0.06)}px system-ui`;
+  function drawSingleSeries(canvas, labels, counts){
+    const ctx = canvas.getContext("2d");
+    fitCanvas(canvas);
+    const w = canvas.width, h = canvas.height;
+    const pad = Math.round(Math.min(w,h) * 0.12);
+
+    clearCanvas(ctx, w, h);
+    drawFrame(ctx, w, h, pad);
+
+    const pts = counts.map((c,i)=>({x:i, y:c}));
+    if(!pts.length){
+      ctx.fillStyle = "rgba(71,85,105,.9)";
+      ctx.font = `${Math.round(Math.min(w,h)*0.08)}px system-ui`;
       ctx.fillText("—", pad, Math.round(h/2));
       return;
     }
 
-    const xs = allPoints.map(p=>p.x);
-    const ys = allPoints.map(p=>p.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = 0;
-    const maxY = Math.max(1, Math.max(...ys));
+    const minX = 0, maxX = Math.max(1, pts.length-1);
+    const maxY = Math.max(1, ...counts);
 
-    const X = x => pad + ( (x - minX) / (maxX - minX || 1) ) * (w - pad*2);
-    const Y = y => (h - pad) - ( (y - minY) / (maxY - minY || 1) ) * (h - pad*2);
+    const xMap = x => pad + (x / (maxX || 1)) * (w - pad*2);
+    const yMap = y => (h - pad) - (y / (maxY || 1)) * (h - pad*2);
 
-    // grid
-    ctx.strokeStyle = "rgba(20,30,45,.10)";
+    // gradient line color
+    const grad = ctx.createLinearGradient(pad, pad, w - pad, h - pad);
+    grad.addColorStop(0, "rgba(124,58,237,.95)");
+    grad.addColorStop(.5, "rgba(6,182,212,.95)");
+    grad.addColorStop(1, "rgba(249,115,22,.95)");
+
+    // area
+    plotArea(ctx, pts, xMap, yMap, {r:124,g:58,b:237}, h - pad);
+
+    // line
+    ctx.save();
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.strokeStyle = grad;
     ctx.beginPath();
-    for(let i=1;i<=3;i++){
-      const yy = pad + i*(h-pad*2)/4;
-      ctx.moveTo(pad, yy);
-      ctx.lineTo(w-pad, yy);
-    }
-    ctx.stroke();
-
-    // deterministic palette from name hash (no hard-coded colors list)
-    const colorFor = (s) => {
-      let h = 0;
-      for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
-      const r = 60 + (h % 160);
-      const g = 60 + ((h>>>8) % 160);
-      const b = 60 + ((h>>>16) % 160);
-      return `rgb(${r},${g},${b})`;
-    };
-
-    names.forEach(n=>{
-      const pts = seriesMap[n];
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = colorFor(n);
-      ctx.beginPath();
-      pts.forEach((p,i)=>{
-        const x=X(p.x), y=Y(p.y);
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      });
-      ctx.stroke();
+    pts.forEach((p,i)=>{
+      const x = xMap(p.x);
+      const y = yMap(p.y);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
+    ctx.stroke();
+    ctx.restore();
+
+    // points
+    ctx.save();
+    ctx.fillStyle = "rgba(15,23,42,.9)";
+    pts.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(xMap(p.x), yMap(p.y), 2.8, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
+
+    // x labels (few)
+    ctx.save();
+    ctx.fillStyle = "rgba(71,85,105,.9)";
+    ctx.font = `${Math.round(Math.min(w,h)*0.045)}px system-ui`;
+    const ticks = Math.min(5, pts.length);
+    for(let t=0; t<ticks; t++){
+      const i = Math.round((t*(pts.length-1))/(ticks-1 || 1));
+      const lx = xMap(i);
+      const ly = h - Math.round(pad*0.45);
+      const txt = labels[i] || "";
+      ctx.textAlign = t===0 ? "left" : (t===ticks-1 ? "right" : "center");
+      ctx.fillText(txt, lx, ly);
+    }
+    ctx.restore();
+  }
+
+  function drawMultiSeries(canvas, labels, seriesByName){
+    const ctx = canvas.getContext("2d");
+    fitCanvas(canvas);
+    const w = canvas.width, h = canvas.height;
+    const pad = Math.round(Math.min(w,h) * 0.12);
+
+    clearCanvas(ctx, w, h);
+    drawFrame(ctx, w, h, pad);
+
+    const names = Object.keys(seriesByName);
+    const n = labels.length;
+    if(!names.length || !n){
+      ctx.fillStyle = "rgba(71,85,105,.9)";
+      ctx.font = `${Math.round(Math.min(w,h)*0.08)}px system-ui`;
+      ctx.fillText("—", pad, Math.round(h/2));
+      return;
+    }
+
+    let maxY = 1;
+    names.forEach(name=>{
+      const arr = seriesByName[name] || [];
+      arr.forEach(v => { if(v > maxY) maxY = v; });
+    });
+
+    const minX = 0, maxX = Math.max(1, n-1);
+    const xMap = x => pad + (x / (maxX || 1)) * (w - pad*2);
+    const yMap = y => (h - pad) - (y / (maxY || 1)) * (h - pad*2);
+
+    // draw each
+    names.forEach(name=>{
+      const rgb = colorForName(name);
+      const pts = Array.from({length:n}, (_,i)=>({x:i, y: (seriesByName[name]?.[i] ?? 0)}));
+      plotLine(ctx, pts, xMap, yMap, rgb, 2.6);
+    });
+
+    // x labels
+    ctx.save();
+    ctx.fillStyle = "rgba(71,85,105,.9)";
+    ctx.font = `${Math.round(Math.min(w,h)*0.045)}px system-ui`;
+    const ticks = Math.min(5, n);
+    for(let t=0; t<ticks; t++){
+      const i = Math.round((t*(n-1))/(ticks-1 || 1));
+      const lx = xMap(i);
+      const ly = h - Math.round(pad*0.45);
+      const txt = labels[i] || "";
+      ctx.textAlign = t===0 ? "left" : (t===ticks-1 ? "right" : "center");
+      ctx.fillText(txt, lx, ly);
+    }
+    ctx.restore();
   }
 
   async function getJson(path){
@@ -314,85 +725,140 @@
     return await res.json();
   }
 
+  function buildQuery(){
+    const win = windowSelect.value;
+    if(win === "custom"){
+      const fromIso = localToIso(fromInput.value);
+      const toIso = localToIso(toInput.value);
+      if(!fromIso || !toIso) return null;
+      return `?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
+    }
+    return `?window=${encodeURIComponent(win)}`;
+  }
+
+  function setCustomVisibility(){
+    const isCustom = windowSelect.value === "custom";
+    fromWrap.classList.toggle("hide", !isCustom);
+    toWrap.classList.toggle("hide", !isCustom);
+  }
+
+  let inflight = 0;
+
   async function loadAll(){
-    if(!API_TOKEN || API_TOKEN.includes("PASTE_")) { setStatus("Token"); return; }
-    setStatus("…");
+    if(!API_TOKEN || API_TOKEN.includes("PASTE_")){
+      setStatus("bad", "Token");
+      return;
+    }
+
+    const qs = buildQuery();
+    if(qs === null){
+      setStatus("bad", "Range");
+      return;
+    }
+
+    const thisRun = ++inflight;
+    setStatus(null, "…");
 
     try{
-      let qs = "";
-      const win = windowSelect.value;
-
-      if(win === "custom"){
-        const fromIso = localToIso(fromInput.value);
-        const toIso = localToIso(toInput.value);
-        if(!fromIso || !toIso) { setStatus("Range"); return; }
-        qs = `?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
-      } else {
-        qs = `?window=${encodeURIComponent(win)}`;
-      }
-
       const stats = await getJson(`/api/stats${qs}`);
+      if(thisRun !== inflight) return;
 
       allTimeTotal.textContent = String(stats.all_time_total ?? 0);
       rangeTotal.textContent = String(stats.range_total ?? 0);
-      rangeLabel.textContent = stats.range?.from_nz && stats.range?.to_nz
-        ? `${stats.range.from_nz} → ${stats.range.to_nz}`
-        : "—";
 
-      const rangeRows = (stats.range_per_name || [])
-        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`).join("");
-      rangePerNameBody.innerHTML = rangeRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
+      // Range label (12h NZ, from/to UTC)
+      const fromUtc = stats.range?.from_utc;
+      const toUtc = stats.range?.to_utc;
+      if(fromUtc && toUtc){
+        rangeLabel.textContent = `${formatNZ12FromIso(fromUtc)} → ${formatNZ12FromIso(toUtc)}`;
+      } else if(stats.range?.from_nz && stats.range?.to_nz){
+        rangeLabel.textContent = `${stats.range.from_nz} → ${stats.range.to_nz}`;
+      } else {
+        rangeLabel.textContent = "—";
+      }
 
-      const allRows = (stats.all_time_per_name || [])
-        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`).join("");
-      allTimePerNameBody.innerHTML = allRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
+      // Recent (use created_at_utc formatted to NZ 12h)
+      const recent = stats.recent || [];
+      recentBody.innerHTML = recent.length
+        ? recent.map(r => {
+            const t = r.created_at_utc ? formatNZ12ShortFromIso(r.created_at_utc) : (r.created_at_nz || "—");
+            return `<tr><td style="color:var(--muted);">${escapeHtml(t)}</td><td>${escapeHtml(r.name)}</td></tr>`;
+          }).join("")
+        : `<tr><td colspan="2" style="color:var(--muted);">—</td></tr>`;
 
-      const recentRows = (stats.recent || [])
-        .map(r => `<tr><td class="muted">${escapeHtml(r.created_at_nz)}</td><td>${escapeHtml(r.name)}</td></tr>`).join("");
-      recentBody.innerHTML = recentRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
+      // All time breakdown (sorted by count desc already; ensure)
+      const all = (stats.all_time_per_name || []).slice().sort((a,b)=> (b.count||0)-(a.count||0) || String(a.name).localeCompare(String(b.name)));
+      allTimePerNameBody.innerHTML = all.length
+        ? all.map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`).join("")
+        : `<tr><td colspan="2" style="color:var(--muted);">—</td></tr>`;
 
-      // Graphs
+      // Timeseries
+      const win = windowSelect.value;
       const bucket = (win === "7d" || win === "30d") ? "day" : "hour";
-      const ts = await getJson(`/api/timeseries${qs}${qs ? "&" : "?"}bucket=${bucket}`);
+      const joinChar = qs.includes("?") ? "&" : "?";
+      const ts = await getJson(`/api/timeseries${qs}${joinChar}bucket=${bucket}`);
+      if(thisRun !== inflight) return;
 
-      // Total line
-      const totalPts = (ts.total || []).map((p, i) => ({ x: i, y: p.count }));
-      drawLineSeries(cTotal, totalPts, { stroke: "#172033" });
+      const total = ts.total || [];
+      const labels = total.map(p => p.label_nz || "");
+      const counts = total.map(p => Number(p.count || 0));
 
-      // Top-name multi line (aligned to total buckets)
-      const buckets = (ts.total || []).map(p => p.bucket_utc);
+      drawSingleSeries(cTotal, labels, counts);
+
+      // Top names series aligned to buckets
+      const buckets = total.map(p => p.bucket_utc);
       const indexOf = new Map(buckets.map((b,i)=>[b,i]));
+      const topNames = ts.top_names || [];
+      const byNameRows = ts.by_name || [];
 
-      const names = ts.top_names || [];
-      const byName = ts.by_name || [];
-      const seriesMap = {};
+      const seriesByName = {};
+      topNames.forEach(n => seriesByName[n] = Array.from({length:buckets.length}, ()=>0));
 
-      names.forEach(n => {
-        seriesMap[n] = buckets.map((_,i)=>({x:i,y:0}));
-      });
-
-      byName.forEach(r=>{
+      byNameRows.forEach(r => {
         const i = indexOf.get(r.bucket_utc);
         if(i === undefined) return;
-        if(!seriesMap[r.name]) return;
-        seriesMap[r.name][i].y = r.count;
+        if(!seriesByName[r.name]) return;
+        seriesByName[r.name][i] = Number(r.count || 0);
       });
 
-      drawMultiLine(cNames, seriesMap);
+      drawMultiSeries(cNames, labels, seriesByName);
 
-      legend.innerHTML = names.map(n=>`<span class="tag">${escapeHtml(n)}</span>`).join("") || "";
+      // Legend
+      legend.innerHTML = topNames.length
+        ? topNames.map(n => {
+            const rgb = colorForName(n);
+            const sw = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+            return `<span class="tag"><span class="swatch" style="background:${sw};"></span>${escapeHtml(n)}</span>`;
+          }).join("")
+        : "";
 
-      setStatus("OK");
+      setStatus("ok", "OK");
     } catch(e){
-      setStatus("Fail");
+      setStatus("bad", "Fail");
     }
   }
 
-  windowSelect.addEventListener("change", () => { updateCustom(); });
-  loadBtn.addEventListener("click", loadAll);
-  window.addEventListener("resize", () => loadAll());
+  // Auto-execute rules:
+  // - window change => execute
+  // - custom: show inputs; when "to" set => execute
+  windowSelect.addEventListener("change", () => {
+    setCustomVisibility();
+    if(windowSelect.value !== "custom") loadAll();
+  });
 
-  updateCustom();
+  toInput.addEventListener("change", () => {
+    if(windowSelect.value === "custom") loadAll();
+  });
+
+  // If user edits "from" after setting "to", re-run when they finish "to" again
+  fromInput.addEventListener("change", () => { /* no-op */ });
+
+  window.addEventListener("resize", () => {
+    // redraw with latest data
+    loadAll();
+  });
+
+  setCustomVisibility();
   loadAll();
 })();
 </script>
