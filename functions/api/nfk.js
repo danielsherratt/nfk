@@ -33,45 +33,36 @@ function nzTimeFromIso(iso) {
 export async function onRequest(context) {
   const { request, env } = context;
 
-  if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders() });
-  }
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders() });
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
-  }
-
-  // Auth
   const auth = request.headers.get("Authorization") || "";
-  if (!env.API_TOKEN || auth !== `Bearer ${env.API_TOKEN}`) {
-    return json({ error: "Unauthorized" }, 401);
-  }
+  if (!env.API_TOKEN || auth !== `Bearer ${env.API_TOKEN}`) return json({ error: "Unauthorized" }, 401);
 
-  // Body: { "name": "Daniel" }
   let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "Invalid JSON body" }, 400);
-  }
+  try { body = await request.json(); }
+  catch { return json({ error: "Invalid JSON body" }, 400); }
 
   const name = String(body?.name || "").trim();
-  if (!name) {
-    return json({ error: "Missing name" }, 400);
-  }
-  if (name.length > 80) {
-    return json({ error: "Name too long" }, 400);
-  }
+  if (!name) return json({ error: "Missing name" }, 400);
+  if (name.length > 80) return json({ error: "Name too long" }, 400);
 
-  const nowIso = new Date().toISOString(); // UTC
+  const nowIso = new Date().toISOString();
+
   await env.DB.prepare(
     `INSERT INTO nfk_events (created_at_utc, name) VALUES (?, ?)`
   ).bind(nowIso, name).run();
+
+  // Optional quote
+  const quoteRow = await env.DB.prepare(
+    `SELECT text FROM quotes ORDER BY RANDOM() LIMIT 1`
+  ).first();
 
   return json({
     ok: true,
     name,
     created_at_utc: nowIso,
     created_at_nz: nzTimeFromIso(nowIso),
+    quote: quoteRow?.text || null,
   });
 }
