@@ -29,7 +29,9 @@
     table{ width:100%; border-collapse:collapse; }
     th,td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top; }
     th{ font-size:11px; color:var(--muted); font-weight:700; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    canvas{ width:100%; height:220px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+    .legend{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .tag{ border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:12px; color:var(--muted); background:#fff; }
   </style>
 </head>
 <body>
@@ -83,6 +85,17 @@
           </div>
         </div>
 
+        <div style="height:12px;"></div>
+
+        <h2>Over time</h2>
+        <canvas id="chartTotal" width="900" height="260"></canvas>
+
+        <div style="height:12px;"></div>
+
+        <h2>Top names</h2>
+        <canvas id="chartNames" width="900" height="260"></canvas>
+        <div class="legend" id="legend"></div>
+
         <div style="height:14px;"></div>
 
         <h2>By name</h2>
@@ -118,11 +131,7 @@
 
 <script>
 (() => {
-  // =========================
-  // Put your token here
-  // =========================
   const API_TOKEN = "PASTE_YOUR_API_TOKEN_HERE";
-  // =========================
 
   const statusPill = document.getElementById("statusPill");
   const windowSelect = document.getElementById("windowSelect");
@@ -138,88 +147,20 @@
   const allTimePerNameBody = document.getElementById("allTimePerNameBody");
   const recentBody = document.getElementById("recentBody");
 
-  function setStatus(t){ statusPill.textContent = t; }
+  const cTotal = document.getElementById("chartTotal");
+  const cNames = document.getElementById("chartNames");
+  const legend = document.getElementById("legend");
 
+  function setStatus(t){ statusPill.textContent = t; }
   function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
       .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
-
-  // NOTE:
-  // datetime-local has no timezone. If your PC is set to NZ time, custom works perfectly.
-  // Window mode always works.
   function localToIso(v){
     if(!v) return null;
     const d = new Date(v);
     if (isNaN(d.getTime())) return null;
     return d.toISOString();
-  }
-
-  async function loadStats(){
-    if(!API_TOKEN || API_TOKEN.includes("PASTE_")){
-      setStatus("Token");
-      return;
-    }
-
-    setStatus("…");
-    allTimeTotal.textContent = "—";
-    rangeTotal.textContent = "—";
-    rangeLabel.textContent = "—";
-
-    try{
-      let qs = "";
-      const win = windowSelect.value;
-
-      if(win === "custom"){
-        const fromIso = localToIso(fromInput.value);
-        const toIso = localToIso(toInput.value);
-        if(!fromIso || !toIso){
-          setStatus("Range");
-          return;
-        }
-        qs = `?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
-      } else {
-        qs = `?window=${encodeURIComponent(win)}`;
-      }
-
-      const res = await fetch(`/api/stats${qs}`, {
-        headers: { Authorization: `Bearer ${API_TOKEN}` }
-      });
-
-      if(!res.ok){
-        setStatus(String(res.status));
-        return;
-      }
-
-      const data = await res.json();
-
-      allTimeTotal.textContent = String(data.all_time_total ?? 0);
-      rangeTotal.textContent = String(data.range_total ?? 0);
-
-      if(data.range?.from_nz && data.range?.to_nz){
-        rangeLabel.textContent = `${data.range.from_nz} → ${data.range.to_nz}`;
-      }
-
-      const rangeRows = (data.range_per_name || [])
-        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`)
-        .join("");
-      rangePerNameBody.innerHTML = rangeRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
-
-      const allRows = (data.all_time_per_name || [])
-        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`)
-        .join("");
-      allTimePerNameBody.innerHTML = allRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
-
-      const recentRows = (data.recent || [])
-        .map(r => `<tr><td class="muted">${escapeHtml(r.created_at_nz)}</td><td>${escapeHtml(r.name)}</td></tr>`)
-        .join("");
-      recentBody.innerHTML = recentRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
-
-      setStatus("OK");
-    } catch {
-      setStatus("Fail");
-    }
   }
 
   function updateCustom(){
@@ -230,10 +171,229 @@
     toInput.style.opacity = isCustom ? "1" : ".5";
   }
 
-  windowSelect.addEventListener("change", updateCustom);
-  loadBtn.addEventListener("click", loadStats);
+  function fitCanvasToCSS(canvas){
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    const ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    canvas.width = Math.floor(cssW * ratio);
+    canvas.height = Math.floor(cssH * ratio);
+    return ratio;
+  }
+
+  function drawAxes(ctx, w, h, pad){
+    ctx.clearRect(0,0,w,h);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(20,30,45,.14)";
+    ctx.beginPath();
+    ctx.moveTo(pad, pad);
+    ctx.lineTo(pad, h-pad);
+    ctx.lineTo(w-pad, h-pad);
+    ctx.stroke();
+  }
+
+  function drawLineSeries(canvas, points, opts={}){
+    const ctx = canvas.getContext("2d");
+    fitCanvasToCSS(canvas);
+
+    const w = canvas.width, h = canvas.height;
+    const pad = Math.round(Math.min(w,h) * 0.10);
+    drawAxes(ctx, w, h, pad);
+
+    if(!points.length){
+      ctx.fillStyle = "#5c667a";
+      ctx.font = `${Math.round(Math.min(w,h)*0.06)}px system-ui`;
+      ctx.fillText("—", pad, Math.round(h/2));
+      return;
+    }
+
+    const xs = points.map(p=>p.x);
+    const ys = points.map(p=>p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = 0;
+    const maxY = Math.max(1, Math.max(...ys));
+
+    const X = x => pad + ( (x - minX) / (maxX - minX || 1) ) * (w - pad*2);
+    const Y = y => (h - pad) - ( (y - minY) / (maxY - minY || 1) ) * (h - pad*2);
+
+    // grid lines
+    ctx.strokeStyle = "rgba(20,30,45,.10)";
+    ctx.beginPath();
+    for(let i=1;i<=3;i++){
+      const yy = pad + i*(h-pad*2)/4;
+      ctx.moveTo(pad, yy);
+      ctx.lineTo(w-pad, yy);
+    }
+    ctx.stroke();
+
+    // line
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = opts.stroke || "#172033";
+    ctx.beginPath();
+    points.forEach((p,i)=>{
+      const x = X(p.x), y = Y(p.y);
+      if(i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // dots
+    ctx.fillStyle = opts.stroke || "#172033";
+    points.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(X(p.x), Y(p.y), 3, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // max label
+    ctx.fillStyle = "#5c667a";
+    ctx.font = `${Math.round(Math.min(w,h)*0.05)}px system-ui`;
+    ctx.fillText(String(maxY), pad+6, pad+18);
+  }
+
+  function drawMultiLine(canvas, seriesMap){
+    const ctx = canvas.getContext("2d");
+    fitCanvasToCSS(canvas);
+    const w = canvas.width, h = canvas.height;
+    const pad = Math.round(Math.min(w,h) * 0.10);
+    drawAxes(ctx, w, h, pad);
+
+    const names = Object.keys(seriesMap);
+    const allPoints = names.flatMap(n => seriesMap[n]);
+    if(!allPoints.length){
+      ctx.fillStyle = "#5c667a";
+      ctx.font = `${Math.round(Math.min(w,h)*0.06)}px system-ui`;
+      ctx.fillText("—", pad, Math.round(h/2));
+      return;
+    }
+
+    const xs = allPoints.map(p=>p.x);
+    const ys = allPoints.map(p=>p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = 0;
+    const maxY = Math.max(1, Math.max(...ys));
+
+    const X = x => pad + ( (x - minX) / (maxX - minX || 1) ) * (w - pad*2);
+    const Y = y => (h - pad) - ( (y - minY) / (maxY - minY || 1) ) * (h - pad*2);
+
+    // grid
+    ctx.strokeStyle = "rgba(20,30,45,.10)";
+    ctx.beginPath();
+    for(let i=1;i<=3;i++){
+      const yy = pad + i*(h-pad*2)/4;
+      ctx.moveTo(pad, yy);
+      ctx.lineTo(w-pad, yy);
+    }
+    ctx.stroke();
+
+    // deterministic palette from name hash (no hard-coded colors list)
+    const colorFor = (s) => {
+      let h = 0;
+      for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+      const r = 60 + (h % 160);
+      const g = 60 + ((h>>>8) % 160);
+      const b = 60 + ((h>>>16) % 160);
+      return `rgb(${r},${g},${b})`;
+    };
+
+    names.forEach(n=>{
+      const pts = seriesMap[n];
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = colorFor(n);
+      ctx.beginPath();
+      pts.forEach((p,i)=>{
+        const x=X(p.x), y=Y(p.y);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    });
+  }
+
+  async function getJson(path){
+    const res = await fetch(path, { headers: { Authorization: `Bearer ${API_TOKEN}` } });
+    if(!res.ok) throw new Error(String(res.status));
+    return await res.json();
+  }
+
+  async function loadAll(){
+    if(!API_TOKEN || API_TOKEN.includes("PASTE_")) { setStatus("Token"); return; }
+    setStatus("…");
+
+    try{
+      let qs = "";
+      const win = windowSelect.value;
+
+      if(win === "custom"){
+        const fromIso = localToIso(fromInput.value);
+        const toIso = localToIso(toInput.value);
+        if(!fromIso || !toIso) { setStatus("Range"); return; }
+        qs = `?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
+      } else {
+        qs = `?window=${encodeURIComponent(win)}`;
+      }
+
+      const stats = await getJson(`/api/stats${qs}`);
+
+      allTimeTotal.textContent = String(stats.all_time_total ?? 0);
+      rangeTotal.textContent = String(stats.range_total ?? 0);
+      rangeLabel.textContent = stats.range?.from_nz && stats.range?.to_nz
+        ? `${stats.range.from_nz} → ${stats.range.to_nz}`
+        : "—";
+
+      const rangeRows = (stats.range_per_name || [])
+        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`).join("");
+      rangePerNameBody.innerHTML = rangeRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
+
+      const allRows = (stats.all_time_per_name || [])
+        .map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`).join("");
+      allTimePerNameBody.innerHTML = allRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
+
+      const recentRows = (stats.recent || [])
+        .map(r => `<tr><td class="muted">${escapeHtml(r.created_at_nz)}</td><td>${escapeHtml(r.name)}</td></tr>`).join("");
+      recentBody.innerHTML = recentRows || `<tr><td colspan="2" class="muted">—</td></tr>`;
+
+      // Graphs
+      const bucket = (win === "7d" || win === "30d") ? "day" : "hour";
+      const ts = await getJson(`/api/timeseries${qs}${qs ? "&" : "?"}bucket=${bucket}`);
+
+      // Total line
+      const totalPts = (ts.total || []).map((p, i) => ({ x: i, y: p.count }));
+      drawLineSeries(cTotal, totalPts, { stroke: "#172033" });
+
+      // Top-name multi line (aligned to total buckets)
+      const buckets = (ts.total || []).map(p => p.bucket_utc);
+      const indexOf = new Map(buckets.map((b,i)=>[b,i]));
+
+      const names = ts.top_names || [];
+      const byName = ts.by_name || [];
+      const seriesMap = {};
+
+      names.forEach(n => {
+        seriesMap[n] = buckets.map((_,i)=>({x:i,y:0}));
+      });
+
+      byName.forEach(r=>{
+        const i = indexOf.get(r.bucket_utc);
+        if(i === undefined) return;
+        if(!seriesMap[r.name]) return;
+        seriesMap[r.name][i].y = r.count;
+      });
+
+      drawMultiLine(cNames, seriesMap);
+
+      legend.innerHTML = names.map(n=>`<span class="tag">${escapeHtml(n)}</span>`).join("") || "";
+
+      setStatus("OK");
+    } catch(e){
+      setStatus("Fail");
+    }
+  }
+
+  windowSelect.addEventListener("change", () => { updateCustom(); });
+  loadBtn.addEventListener("click", loadAll);
+  window.addEventListener("resize", () => loadAll());
+
   updateCustom();
-  loadStats();
+  loadAll();
 })();
 </script>
 </body>
