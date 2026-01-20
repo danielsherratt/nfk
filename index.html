@@ -1,865 +1,333 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NFK Counter</title>
-  <style>
-    :root{
-      --bg1:#f6f7ff;
-      --bg2:#f3fbff;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NFK Counter</title>
 
-      --panel:#ffffff;
-      --text:#0f172a;
-      --muted:#475569;
-      --line:rgba(15,23,42,.12);
+<style>
+:root{
+  --bg1:#f6f7ff;
+  --bg2:#f3fbff;
+  --panel:#ffffff;
+  --text:#0f172a;
+  --muted:#475569;
+  --line:rgba(15,23,42,.12);
+  --shadow:0 18px 45px rgba(2,6,23,.10);
+  --shadow2:0 10px 25px rgba(2,6,23,.08);
+  --radius:20px;
 
-      --shadow: 0 18px 45px rgba(2, 6, 23, .10);
-      --shadow2: 0 10px 25px rgba(2, 6, 23, .08);
-      --radius: 20px;
+  --a1:#7c3aed;
+  --a2:#06b6d4;
+  --a3:#f97316;
+  --a4:#22c55e;
+}
 
-      --a1:#7c3aed;   /* violet */
-      --a2:#06b6d4;   /* cyan */
-      --a3:#f97316;   /* orange */
-      --a4:#22c55e;   /* green */
-      --a5:#e11d48;   /* rose */
-    }
+*{box-sizing:border-box}
 
-    *{ box-sizing:border-box; }
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(124,58,237,.16), transparent 55%),
+    radial-gradient(1000px 650px at 90% 0%, rgba(6,182,212,.14), transparent 55%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:var(--text);
+}
 
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 700px at 10% -10%, rgba(124,58,237,.16), transparent 55%),
-        radial-gradient(1000px 650px at 90% 0%, rgba(6,182,212,.14), transparent 55%),
-        radial-gradient(900px 700px at 50% 110%, rgba(249,115,22,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
-      min-height:100vh;
-    }
+header{
+  max-width:1120px;
+  margin:0 auto;
+  padding:18px 16px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
 
-    header{
-      padding:18px 16px 12px;
-      max-width:1120px;
-      margin:0 auto;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-    }
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
 
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      min-width: 0;
-    }
+.logo{
+  width:44px;height:44px;
+  border-radius:14px;
+  background:conic-gradient(from 180deg,var(--a1),var(--a2),var(--a3),var(--a4),var(--a1));
+  box-shadow:var(--shadow2);
+}
 
-    .logo{
-      width:44px; height:44px;
-      border-radius:14px;
-      background: conic-gradient(from 180deg, var(--a1), var(--a2), var(--a3), var(--a4), var(--a5), var(--a1));
-      box-shadow: var(--shadow2);
-      border: 1px solid rgba(255,255,255,.55);
-    }
+h1{margin:0;font-size:16px}
 
-    h1{
-      font-size:16px;
-      margin:0;
-      letter-spacing:-0.01em;
-    }
+.sub{font-size:12px;color:var(--muted);margin-top:4px}
 
-    .sub{
-      margin-top:4px;
-      font-size:12px;
-      color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 72vw;
-    }
+.headerActions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
 
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
-      border:1px solid rgba(15,23,42,.10);
-      background: rgba(255,255,255,.72);
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow2);
-      font-size:12px;
-      color:var(--muted);
-      height:fit-content;
-      user-select:none;
-    }
+.pill{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.75);
+  box-shadow:var(--shadow2);
+  font-size:12px;
+  color:var(--muted);
+}
 
-    .dot{
-      width:10px; height:10px;
-      border-radius:999px;
-      background: rgba(148,163,184,.9);
-      box-shadow: 0 0 0 4px rgba(148,163,184,.18);
-    }
+.dlbtn{
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.9);
+  box-shadow:var(--shadow2);
+  font-size:12px;
+  font-weight:800;
+  text-decoration:none;
+  color:var(--text);
+}
+.dlbtn:hover{transform:translateY(-1px)}
 
-    .dot.ok{ background: rgba(34,197,94,.95); box-shadow: 0 0 0 4px rgba(34,197,94,.18); }
-    .dot.bad{ background: rgba(225,29,72,.95); box-shadow: 0 0 0 4px rgba(225,29,72,.18); }
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px 28px}
 
-    .wrap{
-      max-width:1120px;
-      margin:0 auto;
-      padding:0 16px 28px;
-    }
+.grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+}
+@media(min-width:980px){
+  .grid{grid-template-columns:1.3fr .7fr}
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-    }
+.card{
+  background:rgba(255,255,255,.82);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
 
-    @media(min-width:980px){
-      .grid{ grid-template-columns: 1.3fr .7fr; }
-    }
+.cardInner{padding:14px}
 
-    .card{
-      background: rgba(255,255,255,.78);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(15,23,42,.10);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
+.controls{display:flex;gap:10px;flex-wrap:wrap}
 
-    .cardInner{ padding:14px; }
+select,input{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#fff;
+}
 
-    .controls{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      align-items:end;
-    }
+.hide{display:none}
 
-    select, input{
-      width:100%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(15,23,42,.14);
-      background: rgba(255,255,255,.92);
-      outline:none;
-      color:var(--text);
-      box-shadow: 0 1px 0 rgba(2,6,23,.04);
-    }
+.kpis{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  padding:14px;
+}
 
-    select:focus, input:focus{
-      border-color: rgba(124,58,237,.45);
-      box-shadow: 0 0 0 4px rgba(124,58,237,.14);
-    }
+.kpi{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:12px;
+  background:#fff;
+  box-shadow:var(--shadow2);
+}
 
-    .control{
-      flex: 1 1 220px;
-      min-width: 170px;
-    }
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .value{
+  margin-top:6px;
+  font-size:34px;
+  font-weight:800;
+  background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
 
-    .control.small{
-      flex: 0 0 200px;
-      min-width: 200px;
-    }
+.section{padding:12px 14px;border-top:1px solid var(--line)}
+.section h2{
+  margin:0;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+}
 
-    .hide{ display:none !important; }
+canvas{
+  width:100%;
+  height:220px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:#fff;
+  box-shadow:var(--shadow2);
+}
 
-    .kpis{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-      padding:14px;
-      border-top: 1px solid rgba(15,23,42,.08);
-      background:
-        radial-gradient(900px 250px at 20% 0%, rgba(124,58,237,.10), transparent 60%),
-        radial-gradient(900px 250px at 80% 0%, rgba(6,182,212,.10), transparent 60%);
-    }
+table{width:100%;border-collapse:collapse}
+th,td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+}
+th{font-size:11px;color:var(--muted);text-transform:uppercase}
 
-    .kpi{
-      border: 1px solid rgba(15,23,42,.10);
-      border-radius: 18px;
-      background: rgba(255,255,255,.86);
-      padding:12px 12px 10px;
-      box-shadow: var(--shadow2);
-    }
-
-    .kpi .label{
-      font-size:12px;
-      color:var(--muted);
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-
-    .chip{
-      width:10px; height:10px; border-radius:999px;
-      background: var(--a2);
-      box-shadow: 0 0 0 4px rgba(6,182,212,.14);
-    }
-    .chip.alt{
-      background: var(--a3);
-      box-shadow: 0 0 0 4px rgba(249,115,22,.14);
-    }
-
-    .kpi .value{
-      margin-top:6px;
-      font-size:34px;
-      font-weight:850;
-      letter-spacing:-0.03em;
-      line-height:1;
-      background: linear-gradient(90deg, var(--a1), var(--a2), var(--a3));
-      -webkit-background-clip:text;
-      background-clip:text;
-      color: transparent;
-    }
-
-    .sectionTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:12px 14px 10px;
-      border-top: 1px solid rgba(15,23,42,.08);
-    }
-
-    .sectionTitle h2{
-      margin:0;
-      font-size:13px;
-      color: var(--muted);
-      font-weight:700;
-      letter-spacing: .02em;
-      text-transform: uppercase;
-    }
-
-    .legend{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      padding:0 14px 12px;
-    }
-    .tag{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      border: 1px solid rgba(15,23,42,.10);
-      background: rgba(255,255,255,.86);
-      border-radius: 999px;
-      padding:6px 10px;
-      font-size:12px;
-      color: var(--muted);
-      box-shadow: var(--shadow2);
-    }
-    .swatch{
-      width:10px; height:10px; border-radius:999px;
-    }
-
-    .charts{
-      display:grid;
-      gap:12px;
-      padding:14px;
-      border-top: 1px solid rgba(15,23,42,.08);
-      background: rgba(255,255,255,.35);
-    }
-
-    canvas{
-      width:100%;
-      height:220px;
-      border-radius: 18px;
-      border: 1px solid rgba(15,23,42,.10);
-      background: rgba(255,255,255,.86);
-      box-shadow: var(--shadow2);
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-    }
-
-    th, td{
-      text-align:left;
-      padding:10px 12px;
-      border-bottom: 1px solid rgba(15,23,42,.08);
-      font-size:13px;
-      vertical-align:top;
-    }
-
-    th{
-      font-size:11px;
-      color: var(--muted);
-      font-weight:700;
-      text-transform: uppercase;
-      letter-spacing:.04em;
-      background: rgba(255,255,255,.35);
-    }
-
-    tbody tr:hover td{
-      background: rgba(124,58,237,.06);
-    }
-
-    .right .cardInner{ padding:0; }
-    .rightHeader{
-      padding:14px;
-      border-bottom: 1px solid rgba(15,23,42,.08);
-      background:
-        radial-gradient(800px 240px at 10% 0%, rgba(34,197,94,.10), transparent 60%),
-        radial-gradient(800px 240px at 90% 0%, rgba(225,29,72,.08), transparent 60%);
-    }
-
-    .rightHeader .title{
-      margin:0;
-      font-size:14px;
-      font-weight:800;
-      letter-spacing:-.01em;
-    }
-    .rightHeader .mini{
-      margin-top:4px;
-      font-size:12px;
-      color: var(--muted);
-    }
-  </style>
+tbody tr:hover td{background:rgba(124,58,237,.06)}
+</style>
 </head>
 
 <body>
-  <header>
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div style="min-width:0;">
-        <h1>NFK Counter</h1>
-        <div class="sub" id="rangeLabel">—</div>
-      </div>
-    </div>
-    <div class="pill" id="statusPill">
-      <span class="dot" id="statusDot"></span>
-      <span id="statusText">—</span>
-    </div>
-  </header>
 
-  <div class="wrap">
-    <div class="grid">
-      <div class="card">
-        <div class="cardInner">
-          <div class="controls">
-            <div class="control small">
-              <select id="windowSelect">
-                <option value="15m">15m</option>
-                <option value="60m">60m</option>
-                <option value="6h">6h</option>
-                <option value="24h" selected>24h</option>
-                <option value="7d">7d</option>
-                <option value="30d">30d</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-
-            <div class="control hide" id="fromWrap">
-              <input id="fromInput" type="datetime-local" />
-            </div>
-
-            <div class="control hide" id="toWrap">
-              <input id="toInput" type="datetime-local" />
-            </div>
-          </div>
-        </div>
-
-        <div class="kpis">
-          <div class="kpi">
-            <div class="label"><span class="chip"></span> Total</div>
-            <div class="value" id="allTimeTotal">—</div>
-          </div>
-          <div class="kpi">
-            <div class="label"><span class="chip alt"></span> Range</div>
-            <div class="value" id="rangeTotal">—</div>
-          </div>
-        </div>
-
-        <div class="sectionTitle">
-          <h2>Over time</h2>
-        </div>
-        <div class="charts">
-          <canvas id="chartTotal"></canvas>
-          <canvas id="chartNames"></canvas>
-        </div>
-        <div class="legend" id="legend"></div>
-      </div>
-
-      <div class="card right">
-        <div class="rightHeader">
-          <div class="title">Activity</div>
-        </div>
-
-        <div class="sectionTitle">
-          <h2>Recent</h2>
-        </div>
-        <table>
-          <thead>
-            <tr><th>Time</th><th>Name</th></tr>
-          </thead>
-          <tbody id="recentBody">
-            <tr><td colspan="2" style="color:var(--muted);">—</td></tr>
-          </tbody>
-        </table>
-
-        <div class="sectionTitle">
-          <h2>All time</h2>
-        </div>
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Count</th></tr>
-          </thead>
-          <tbody id="allTimePerNameBody">
-            <tr><td colspan="2" style="color:var(--muted);">—</td></tr>
-          </tbody>
-        </table>
-      </div>
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <h1>NFK Counter</h1>
+      <div class="sub" id="rangeLabel">—</div>
     </div>
   </div>
 
+  <div class="headerActions">
+    <a class="dlbtn" href="/NFKCounter.exe" download>Download</a>
+    <div class="pill" id="status">—</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT -->
+    <div class="card">
+      <div class="cardInner">
+        <div class="controls">
+          <select id="window">
+            <option value="15m">15m</option>
+            <option value="60m">60m</option>
+            <option value="6h">6h</option>
+            <option value="24h" selected>24h</option>
+            <option value="7d">7d</option>
+            <option value="30d">30d</option>
+            <option value="custom">Custom</option>
+          </select>
+
+          <input id="from" type="datetime-local" class="hide">
+          <input id="to" type="datetime-local" class="hide">
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Total</div>
+          <div class="value" id="totalAll">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Range</div>
+          <div class="value" id="totalRange">—</div>
+        </div>
+      </div>
+
+      <div class="section"><h2>Over time</h2></div>
+      <div class="cardInner"><canvas id="chartTotal"></canvas></div>
+
+      <div class="section"><h2>Top names</h2></div>
+      <div class="cardInner"><canvas id="chartNames"></canvas></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card">
+      <div class="section"><h2>Recent</h2></div>
+      <table>
+        <thead><tr><th>Time (NZ)</th><th>Name</th></tr></thead>
+        <tbody id="recent"><tr><td colspan="2">—</td></tr></tbody>
+      </table>
+
+      <div class="section"><h2>All time</h2></div>
+      <table>
+        <thead><tr><th>Name</th><th>Count</th></tr></thead>
+        <tbody id="allTime"><tr><td colspan="2">—</td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
 <script>
-(() => {
-  // Put your token here
-  const API_TOKEN = "Granite663WalnutBreezeQuiet!";
+const API_TOKEN="PASTE_YOUR_API_TOKEN_HERE";
 
-  const statusText = document.getElementById("statusText");
-  const statusDot = document.getElementById("statusDot");
-  const rangeLabel = document.getElementById("rangeLabel");
+const $=id=>document.getElementById(id);
+const status=$("status");
 
-  const windowSelect = document.getElementById("windowSelect");
-  const fromWrap = document.getElementById("fromWrap");
-  const toWrap = document.getElementById("toWrap");
-  const fromInput = document.getElementById("fromInput");
-  const toInput = document.getElementById("toInput");
+function nz12(iso){
+  return new Intl.DateTimeFormat("en-NZ",{
+    timeZone:"Pacific/Auckland",
+    hour:"numeric",minute:"2-digit",second:"2-digit",
+    day:"2-digit",month:"2-digit",year:"numeric",
+    hour12:true
+  }).format(new Date(iso));
+}
 
-  const allTimeTotal = document.getElementById("allTimeTotal");
-  const rangeTotal = document.getElementById("rangeTotal");
-
-  const recentBody = document.getElementById("recentBody");
-  const allTimePerNameBody = document.getElementById("allTimePerNameBody");
-
-  const cTotal = document.getElementById("chartTotal");
-  const cNames = document.getElementById("chartNames");
-  const legend = document.getElementById("legend");
-
-  function setStatus(state, text){
-    statusText.textContent = text;
-    statusDot.classList.remove("ok","bad");
-    if(state === "ok") statusDot.classList.add("ok");
-    else if(state === "bad") statusDot.classList.add("bad");
+function qs(){
+  if(window.value==="custom"){
+    if(!from.value||!to.value)return null;
+    return `?from=${new Date(from.value).toISOString()}&to=${new Date(to.value).toISOString()}`;
   }
+  return `?window=${window.value}`;
+}
 
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-  }
+async function get(url){
+  const r=await fetch(url,{headers:{Authorization:`Bearer ${API_TOKEN}`}});
+  if(!r.ok)throw r.status;
+  return r.json();
+}
 
-  function formatNZ12FromIso(iso){
-    try{
-      return new Intl.DateTimeFormat("en-NZ", {
-        timeZone: "Pacific/Auckland",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "numeric",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-      }).format(new Date(iso));
-    } catch {
-      return iso;
-    }
-  }
+async function load(){
+  const q=qs(); if(!q)return;
+  status.textContent="…";
+  try{
+    const s=await get(`/api/stats${q}`);
+    totalAll.textContent=s.all_time_total;
+    totalRange.textContent=s.range_total;
+    rangeLabel.textContent=nz12(s.range.from_utc)+" → "+nz12(s.range.to_utc);
 
-  function formatNZ12ShortFromIso(iso){
-    try{
-      return new Intl.DateTimeFormat("en-NZ", {
-        timeZone: "Pacific/Auckland",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true
-      }).format(new Date(iso));
-    } catch {
-      return iso;
-    }
-  }
+    recent.innerHTML=s.recent.map(r=>`<tr><td>${nz12(r.created_at_utc)}</td><td>${r.name}</td></tr>`).join("")||"<tr><td colspan=2>—</td></tr>";
+    allTime.innerHTML=s.all_time_per_name.map(r=>`<tr><td>${r.name}</td><td>${r.count}</td></tr>`).join("");
 
-  function localToIso(v){
-    if(!v) return null;
-    const d = new Date(v);
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString();
-  }
+    const bucket=(window.value==="7d"||window.value==="30d")?"day":"hour";
+    const t=await get(`/api/timeseries${q}&bucket=${bucket}`);
+    draw(chartTotal,t.total.map(x=>x.count));
+    draw(chartNames,t.total.map(x=>x.count));
+    status.textContent="OK";
+  }catch{status.textContent="Fail";}
+}
 
-  function fitCanvas(canvas){
-    const ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    canvas.width = Math.max(1, Math.floor(w * ratio));
-    canvas.height = Math.max(1, Math.floor(h * ratio));
-    return ratio;
-  }
-
-  function hexToRgb(hex){
-    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if(!m) return {r:15,g:23,b:42};
-    return { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
-  }
-
-  function colorForName(name){
-    // Deterministic, vibrant-ish
-    let h = 0;
-    for (let i=0; i<name.length; i++) h = (h*33 + name.charCodeAt(i)) >>> 0;
-    const r = 70 + (h % 150);
-    const g = 70 + ((h >>> 8) % 150);
-    const b = 70 + ((h >>> 16) % 150);
-    return { r, g, b };
-  }
-
-  function clearCanvas(ctx, w, h){
-    ctx.clearRect(0,0,w,h);
-  }
-
-  function drawFrame(ctx, w, h, pad){
-    // subtle grid + axes
-    ctx.save();
-    ctx.lineWidth = 1;
-
-    // grid
-    ctx.strokeStyle = "rgba(15,23,42,.08)";
-    ctx.beginPath();
-    for(let i=1;i<=3;i++){
-      const y = pad + i*(h - pad*2)/4;
-      ctx.moveTo(pad, y);
-      ctx.lineTo(w - pad, y);
-    }
-    ctx.stroke();
-
-    // axes
-    ctx.strokeStyle = "rgba(15,23,42,.14)";
-    ctx.beginPath();
-    ctx.moveTo(pad, pad);
-    ctx.lineTo(pad, h - pad);
-    ctx.lineTo(w - pad, h - pad);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  function plotLine(ctx, pts, xMap, yMap, rgb, width){
-    if(!pts.length) return;
-    ctx.save();
-    ctx.lineWidth = width;
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    ctx.strokeStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
-
-    ctx.beginPath();
-    pts.forEach((p,i)=>{
-      const x = xMap(p.x);
-      const y = yMap(p.y);
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
-
-    // points
-    ctx.fillStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
-    pts.forEach(p=>{
-      ctx.beginPath();
-      ctx.arc(xMap(p.x), yMap(p.y), 3.2, 0, Math.PI*2);
-      ctx.fill();
-    });
-
-    ctx.restore();
-  }
-
-  function plotArea(ctx, pts, xMap, yMap, rgb, baseY){
-    if(!pts.length) return;
-    ctx.save();
-    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},.10)`;
-    ctx.beginPath();
-    pts.forEach((p,i)=>{
-      const x = xMap(p.x);
-      const y = yMap(p.y);
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.lineTo(xMap(pts[pts.length-1].x), baseY);
-    ctx.lineTo(xMap(pts[0].x), baseY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawSingleSeries(canvas, labels, counts){
-    const ctx = canvas.getContext("2d");
-    fitCanvas(canvas);
-    const w = canvas.width, h = canvas.height;
-    const pad = Math.round(Math.min(w,h) * 0.12);
-
-    clearCanvas(ctx, w, h);
-    drawFrame(ctx, w, h, pad);
-
-    const pts = counts.map((c,i)=>({x:i, y:c}));
-    if(!pts.length){
-      ctx.fillStyle = "rgba(71,85,105,.9)";
-      ctx.font = `${Math.round(Math.min(w,h)*0.08)}px system-ui`;
-      ctx.fillText("—", pad, Math.round(h/2));
-      return;
-    }
-
-    const minX = 0, maxX = Math.max(1, pts.length-1);
-    const maxY = Math.max(1, ...counts);
-
-    const xMap = x => pad + (x / (maxX || 1)) * (w - pad*2);
-    const yMap = y => (h - pad) - (y / (maxY || 1)) * (h - pad*2);
-
-    // gradient line color
-    const grad = ctx.createLinearGradient(pad, pad, w - pad, h - pad);
-    grad.addColorStop(0, "rgba(124,58,237,.95)");
-    grad.addColorStop(.5, "rgba(6,182,212,.95)");
-    grad.addColorStop(1, "rgba(249,115,22,.95)");
-
-    // area
-    plotArea(ctx, pts, xMap, yMap, {r:124,g:58,b:237}, h - pad);
-
-    // line
-    ctx.save();
-    ctx.lineWidth = 3;
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    ctx.strokeStyle = grad;
-    ctx.beginPath();
-    pts.forEach((p,i)=>{
-      const x = xMap(p.x);
-      const y = yMap(p.y);
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
-    ctx.restore();
-
-    // points
-    ctx.save();
-    ctx.fillStyle = "rgba(15,23,42,.9)";
-    pts.forEach(p=>{
-      ctx.beginPath();
-      ctx.arc(xMap(p.x), yMap(p.y), 2.8, 0, Math.PI*2);
-      ctx.fill();
-    });
-    ctx.restore();
-
-    // x labels (few)
-    ctx.save();
-    ctx.fillStyle = "rgba(71,85,105,.9)";
-    ctx.font = `${Math.round(Math.min(w,h)*0.045)}px system-ui`;
-    const ticks = Math.min(5, pts.length);
-    for(let t=0; t<ticks; t++){
-      const i = Math.round((t*(pts.length-1))/(ticks-1 || 1));
-      const lx = xMap(i);
-      const ly = h - Math.round(pad*0.45);
-      const txt = labels[i] || "";
-      ctx.textAlign = t===0 ? "left" : (t===ticks-1 ? "right" : "center");
-      ctx.fillText(txt, lx, ly);
-    }
-    ctx.restore();
-  }
-
-  function drawMultiSeries(canvas, labels, seriesByName){
-    const ctx = canvas.getContext("2d");
-    fitCanvas(canvas);
-    const w = canvas.width, h = canvas.height;
-    const pad = Math.round(Math.min(w,h) * 0.12);
-
-    clearCanvas(ctx, w, h);
-    drawFrame(ctx, w, h, pad);
-
-    const names = Object.keys(seriesByName);
-    const n = labels.length;
-    if(!names.length || !n){
-      ctx.fillStyle = "rgba(71,85,105,.9)";
-      ctx.font = `${Math.round(Math.min(w,h)*0.08)}px system-ui`;
-      ctx.fillText("—", pad, Math.round(h/2));
-      return;
-    }
-
-    let maxY = 1;
-    names.forEach(name=>{
-      const arr = seriesByName[name] || [];
-      arr.forEach(v => { if(v > maxY) maxY = v; });
-    });
-
-    const minX = 0, maxX = Math.max(1, n-1);
-    const xMap = x => pad + (x / (maxX || 1)) * (w - pad*2);
-    const yMap = y => (h - pad) - (y / (maxY || 1)) * (h - pad*2);
-
-    // draw each
-    names.forEach(name=>{
-      const rgb = colorForName(name);
-      const pts = Array.from({length:n}, (_,i)=>({x:i, y: (seriesByName[name]?.[i] ?? 0)}));
-      plotLine(ctx, pts, xMap, yMap, rgb, 2.6);
-    });
-
-    // x labels
-    ctx.save();
-    ctx.fillStyle = "rgba(71,85,105,.9)";
-    ctx.font = `${Math.round(Math.min(w,h)*0.045)}px system-ui`;
-    const ticks = Math.min(5, n);
-    for(let t=0; t<ticks; t++){
-      const i = Math.round((t*(n-1))/(ticks-1 || 1));
-      const lx = xMap(i);
-      const ly = h - Math.round(pad*0.45);
-      const txt = labels[i] || "";
-      ctx.textAlign = t===0 ? "left" : (t===ticks-1 ? "right" : "center");
-      ctx.fillText(txt, lx, ly);
-    }
-    ctx.restore();
-  }
-
-  async function getJson(path){
-    const res = await fetch(path, { headers: { Authorization: `Bearer ${API_TOKEN}` } });
-    if(!res.ok) throw new Error(String(res.status));
-    return await res.json();
-  }
-
-  function buildQuery(){
-    const win = windowSelect.value;
-    if(win === "custom"){
-      const fromIso = localToIso(fromInput.value);
-      const toIso = localToIso(toInput.value);
-      if(!fromIso || !toIso) return null;
-      return `?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
-    }
-    return `?window=${encodeURIComponent(win)}`;
-  }
-
-  function setCustomVisibility(){
-    const isCustom = windowSelect.value === "custom";
-    fromWrap.classList.toggle("hide", !isCustom);
-    toWrap.classList.toggle("hide", !isCustom);
-  }
-
-  let inflight = 0;
-
-  async function loadAll(){
-    if(!API_TOKEN || API_TOKEN.includes("PASTE_")){
-      setStatus("bad", "Token");
-      return;
-    }
-
-    const qs = buildQuery();
-    if(qs === null){
-      setStatus("bad", "Range");
-      return;
-    }
-
-    const thisRun = ++inflight;
-    setStatus(null, "…");
-
-    try{
-      const stats = await getJson(`/api/stats${qs}`);
-      if(thisRun !== inflight) return;
-
-      allTimeTotal.textContent = String(stats.all_time_total ?? 0);
-      rangeTotal.textContent = String(stats.range_total ?? 0);
-
-      // Range label (12h NZ, from/to UTC)
-      const fromUtc = stats.range?.from_utc;
-      const toUtc = stats.range?.to_utc;
-      if(fromUtc && toUtc){
-        rangeLabel.textContent = `${formatNZ12FromIso(fromUtc)} → ${formatNZ12FromIso(toUtc)}`;
-      } else if(stats.range?.from_nz && stats.range?.to_nz){
-        rangeLabel.textContent = `${stats.range.from_nz} → ${stats.range.to_nz}`;
-      } else {
-        rangeLabel.textContent = "—";
-      }
-
-      // Recent (use created_at_utc formatted to NZ 12h)
-      const recent = stats.recent || [];
-      recentBody.innerHTML = recent.length
-        ? recent.map(r => {
-            const t = r.created_at_utc ? formatNZ12ShortFromIso(r.created_at_utc) : (r.created_at_nz || "—");
-            return `<tr><td style="color:var(--muted);">${escapeHtml(t)}</td><td>${escapeHtml(r.name)}</td></tr>`;
-          }).join("")
-        : `<tr><td colspan="2" style="color:var(--muted);">—</td></tr>`;
-
-      // All time breakdown (sorted by count desc already; ensure)
-      const all = (stats.all_time_per_name || []).slice().sort((a,b)=> (b.count||0)-(a.count||0) || String(a.name).localeCompare(String(b.name)));
-      allTimePerNameBody.innerHTML = all.length
-        ? all.map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`).join("")
-        : `<tr><td colspan="2" style="color:var(--muted);">—</td></tr>`;
-
-      // Timeseries
-      const win = windowSelect.value;
-      const bucket = (win === "7d" || win === "30d") ? "day" : "hour";
-      const joinChar = qs.includes("?") ? "&" : "?";
-      const ts = await getJson(`/api/timeseries${qs}${joinChar}bucket=${bucket}`);
-      if(thisRun !== inflight) return;
-
-      const total = ts.total || [];
-      const labels = total.map(p => p.label_nz || "");
-      const counts = total.map(p => Number(p.count || 0));
-
-      drawSingleSeries(cTotal, labels, counts);
-
-      // Top names series aligned to buckets
-      const buckets = total.map(p => p.bucket_utc);
-      const indexOf = new Map(buckets.map((b,i)=>[b,i]));
-      const topNames = ts.top_names || [];
-      const byNameRows = ts.by_name || [];
-
-      const seriesByName = {};
-      topNames.forEach(n => seriesByName[n] = Array.from({length:buckets.length}, ()=>0));
-
-      byNameRows.forEach(r => {
-        const i = indexOf.get(r.bucket_utc);
-        if(i === undefined) return;
-        if(!seriesByName[r.name]) return;
-        seriesByName[r.name][i] = Number(r.count || 0);
-      });
-
-      drawMultiSeries(cNames, labels, seriesByName);
-
-      // Legend
-      legend.innerHTML = topNames.length
-        ? topNames.map(n => {
-            const rgb = colorForName(n);
-            const sw = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
-            return `<span class="tag"><span class="swatch" style="background:${sw};"></span>${escapeHtml(n)}</span>`;
-          }).join("")
-        : "";
-
-      setStatus("ok", "OK");
-    } catch(e){
-      setStatus("bad", "Fail");
-    }
-  }
-
-  // Auto-execute rules:
-  // - window change => execute
-  // - custom: show inputs; when "to" set => execute
-  windowSelect.addEventListener("change", () => {
-    setCustomVisibility();
-    if(windowSelect.value !== "custom") loadAll();
+function draw(c,data){
+  const ctx=c.getContext("2d");
+  c.width=c.clientWidth*devicePixelRatio;
+  c.height=c.clientHeight*devicePixelRatio;
+  ctx.clearRect(0,0,c.width,c.height);
+  const max=Math.max(1,...data);
+  const p=30,w=c.width-p*2,h=c.height-p*2;
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x=p+i*(w/(data.length-1||1));
+    const y=p+h-(v/max*h);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
+  ctx.strokeStyle="#7c3aed";
+  ctx.lineWidth=3;
+  ctx.stroke();
+}
 
-  toInput.addEventListener("change", () => {
-    if(windowSelect.value === "custom") loadAll();
-  });
+window.onchange=()=>{
+  from.classList.toggle("hide",window.value!=="custom");
+  to.classList.toggle("hide",window.value!=="custom");
+  if(window.value!=="custom")load();
+};
+to.onchange=load;
 
-  // If user edits "from" after setting "to", re-run when they finish "to" again
-  fromInput.addEventListener("change", () => { /* no-op */ });
-
-  window.addEventListener("resize", () => {
-    // redraw with latest data
-    loadAll();
-  });
-
-  setCustomVisibility();
-  loadAll();
-})();
+load();
 </script>
 </body>
 </html>
